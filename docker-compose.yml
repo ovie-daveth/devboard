@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    ports:
+      - "55432:5432"
+    environment:
+      POSTGRES_USER: devboard
+      POSTGRES_PASSWORD: devboard
+      POSTGRES_DB: devboard
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
