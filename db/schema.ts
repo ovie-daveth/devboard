@@ -15,3 +15,11 @@ export const logs = pgTable("logs", {
 
   metadata: jsonb("metadata"),
 });
+
+
+export const Users = pgTable("users", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+});
