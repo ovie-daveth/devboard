@@ -1,19 +1,46 @@
 import { pgTable, uuid, text, timestamp, jsonb, index } from "drizzle-orm/pg-core";
 
-export const logs = pgTable("logs", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  timestamp: timestamp("timestamp", { withTimezone: true }).notNull().defaultNow(),
-  level: text("level").notNull(),
-  service: text("service").notNull(),
-  message: text("message").notNull(),
-  metadata: jsonb("metadata"),
-}, (table) => {
-  return {
-    timestampIdx: index("timestamp_idx").on(table.timestamp),
-    serviceIdx: index("service_idx").on(table.service),
-    levelIdx: index("level_idx").on(table.level),
-  };
-});
+
+export const logs = pgTable(
+  "logs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    timestamp: timestamp("timestamp", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+
+    receivedAt: timestamp("received_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+
+    level: text("level").notNull(),
+
+    service: text("service").notNull(),
+
+    environment: text("environment").notNull().default("development"),
+
+    message: text("message").notNull(),
+
+    traceId: text("trace_id"),
+    spanId: text("span_id"),
+    requestId: text("request_id"),
+
+    metadata: jsonb("metadata"),
+  },
+  (table) => ({
+    timestampIdx: index("logs_timestamp_idx").on(table.timestamp),
+    receivedAtIdx: index("logs_received_at_idx").on(table.receivedAt),
+
+    serviceIdx: index("logs_service_idx").on(table.service),
+    levelIdx: index("logs_level_idx").on(table.level),
+    environmentIdx: index("logs_environment_idx").on(table.environment),
+
+    traceIdIdx: index("logs_trace_id_idx").on(table.traceId),
+    spanIdIdx: index("logs_span_id_idx").on(table.spanId),
+    requestIdIdx: index("logs_request_id_idx").on(table.requestId),
+  })
+);
 
 export const servicesType = pgTable("services_type", {
   id: uuid("id").defaultRandom().primaryKey(),

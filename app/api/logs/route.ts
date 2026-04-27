@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { logs } from "@/db/schema";
 import { and, desc, eq, gte, lte, type SQL } from "drizzle-orm";
+import { createLogSchema } from "@/lib/validations/log";
 
 const VALID_LOG_LEVELS = new Set(["debug", "info", "warn", "error"]);
 const DEFAULT_LIMIT = 50;
@@ -39,24 +40,34 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { level, service, message, metadata } = body;
+    const parsed = createLogSchema.safeParse(body);
 
-    if (!level || !service || !message) {
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        {
+          error: "Invalid log payload",
+          issues: parsed.error.flatten().fieldErrors,
+        },
         { status: 400 }
       );
     }
 
+    const log = parsed.data;
+
     await db.insert(logs).values({
-      level,
-      service,
-      message,
-      metadata,
+      level: log.level,
+      service: log.service,
+      message: log.message,
+      timestamp: log.timestamp ?? new Date(),
+      environment: log.environment,
+      traceId: log.traceId,
+      spanId: log.spanId,
+      requestId: log.requestId,
+      metadata: log.metadata,
     });
 
-    return NextResponse.json({ success: true });
-  }  catch (err) {
+    return NextResponse.json({ success: true }, { status: 201 });
+  } catch (err) {
     console.error("LOG_INGEST_ERROR:", err);
 
     return NextResponse.json(
@@ -74,6 +85,10 @@ export async function GET(req: NextRequest) {
     const level = searchParams.get("level");
     const from = searchParams.get("from");
     const to = searchParams.get("to");
+    const environment = searchParams.get("environment");
+    const traceId = searchParams.get("traceId");
+    const requestId = searchParams.get("requestId");
+
     const requestedLimit = parsePaginationParam(
       searchParams.get("limit"),
       DEFAULT_LIMIT
@@ -108,6 +123,9 @@ export async function GET(req: NextRequest) {
     if (level) filters.push(eq(logs.level, level));
     if (fromDate) filters.push(gte(logs.timestamp, fromDate));
     if (toDate) filters.push(lte(logs.timestamp, toDate));
+    if (environment) filters.push(eq(logs.environment, environment));
+    if (traceId) filters.push(eq(logs.traceId, traceId));
+    if (requestId) filters.push(eq(logs.requestId, requestId));
 
     const data =
       filters.length > 0
