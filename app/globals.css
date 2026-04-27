@@ -24,3 +24,19 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.swagger-ui {
+  color: #0f172a;
+}
+
+.swagger-ui .scheme-container,
+.swagger-ui .models {
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.swagger-ui .opblock,
+.swagger-ui .information-container.wrapper,
+.swagger-ui .scheme-container {
+  border-radius: 8px;
+}
