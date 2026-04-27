@@ -1,25 +1,25 @@
-import { pgTable, uuid, text, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, jsonb, index } from "drizzle-orm/pg-core";
 
 export const logs = pgTable("logs", {
   id: uuid("id").defaultRandom().primaryKey(),
-
-  timestamp: timestamp("timestamp", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-
+  timestamp: timestamp("timestamp", { withTimezone: true }).notNull().defaultNow(),
   level: text("level").notNull(),
-
   service: text("service").notNull(),
-
   message: text("message").notNull(),
-
   metadata: jsonb("metadata"),
+}, (table) => {
+  return {
+    timestampIdx: index("timestamp_idx").on(table.timestamp),
+    serviceIdx: index("service_idx").on(table.service),
+    levelIdx: index("level_idx").on(table.level),
+  };
 });
 
-
-export const Users = pgTable("users", {
+export const servicesType = pgTable("services_type", {
   id: uuid("id").defaultRandom().primaryKey(),
-  email: text("email").notNull().unique(),
-  name: text("name").notNull(),
-  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  name: text("name").notNull().unique(),
+}, (table) => {
+  return {
+    nameIdx: index("name_idx").on(table.name),
+  };
 });

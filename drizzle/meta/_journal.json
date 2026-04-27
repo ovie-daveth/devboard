@@ -15,6 +15,20 @@
       "when": 1777243245011,
       "tag": "0001_tranquil_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777294446133,
+      "tag": "0002_lush_alex_wilder",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777296846948,
+      "tag": "0003_wandering_gabe_jones",
+      "breakpoints": true
     }
   ]
 }

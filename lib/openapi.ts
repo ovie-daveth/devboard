@@ -41,9 +41,55 @@ export const openApiDocument = {
             required: false,
             schema: {
               type: "string",
+              enum: ["debug", "info", "warn", "error"],
               example: "error",
             },
             description: "Only return logs with this level.",
+          },
+          {
+            name: "from",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+              format: "date-time",
+              example: "2026-04-27T00:00:00.000Z",
+            },
+            description: "Only return logs at or after this timestamp.",
+          },
+          {
+            name: "to",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+              format: "date-time",
+              example: "2026-04-27T23:59:59.999Z",
+            },
+            description: "Only return logs at or before this timestamp.",
+          },
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            schema: {
+              type: "integer",
+              minimum: 0,
+              maximum: 100,
+              default: 50,
+            },
+            description: "Maximum number of logs to return.",
+          },
+          {
+            name: "offset",
+            in: "query",
+            required: false,
+            schema: {
+              type: "integer",
+              minimum: 0,
+              default: 0,
+            },
+            description: "Number of logs to skip before returning results.",
           },
         ],
         responses: {
@@ -60,6 +106,36 @@ export const openApiDocument = {
                       items: {
                         $ref: "#/components/schemas/Log",
                       },
+                    },
+                    meta: {
+                      $ref: "#/components/schemas/PaginationMeta",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid query parameters.",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ErrorResponse",
+                },
+                examples: {
+                  invalidLevel: {
+                    value: {
+                      error: "Invalid level",
+                    },
+                  },
+                  invalidPagination: {
+                    value: {
+                      error: "Invalid pagination parameters",
+                    },
+                  },
+                  invalidDate: {
+                    value: {
+                      error: "Invalid date parameters",
                     },
                   },
                 },
@@ -134,7 +210,92 @@ export const openApiDocument = {
             $ref: "#/components/responses/InternalServerError",
           },
         },
-      },
+      }
+    },
+    "/api/services": {
+      post: {
+        tags: ["Services"],
+        summary: "Register a service",
+        description: "Registers a new service in the system.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["service"],
+                properties: {
+                  service: {
+                    type: "string",
+                    description: "Name of the service to register.",
+                    example: "worker",
+                  },
+                },
+              },
+              examples: {
+                registerWorker: {
+                  summary: "Register worker service",
+                  value: {
+                    service: "worker",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Service registered successfully.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["success", "data"],
+                  properties: {
+                    success: {
+                      type: "boolean",
+                      example: true,
+                    },
+                    data: {
+                      $ref: "#/components/schemas/InsertResult",
+                    },
+                  },
+                },
+                example: {
+                  success: true,
+                  data: {
+                    command: "INSERT",
+                    rowCount: 1,
+                    oid: 0,
+                    rows: [],
+                    fields: [],
+                    _types: {},
+                    RowCtor: null,
+                    rowAsArray: false,
+                    _prebuiltEmptyResultObject: null,
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Required field is missing.",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ErrorResponse",
+                },
+                example: {
+                  error: "Missing required field",
+                },
+              },
+            },
+          },
+          "500": {
+            $ref: "#/components/responses/InternalServerError",
+          },
+        },
+      }
     },
   },
   components: {
@@ -199,6 +360,79 @@ export const openApiDocument = {
         properties: {
           error: {
             type: "string",
+          },
+        },
+      },
+      PaginationMeta: {
+        type: "object",
+        required: ["limit", "offset", "count"],
+        properties: {
+          limit: {
+            type: "integer",
+            example: 50,
+          },
+          offset: {
+            type: "integer",
+            example: 0,
+          },
+          count: {
+            type: "integer",
+            example: 12,
+          },
+        },
+      },
+      InsertResult: {
+        type: "object",
+        required: [
+          "command",
+          "rowCount",
+          "oid",
+          "rows",
+          "fields",
+          "_types",
+          "RowCtor",
+          "rowAsArray",
+          "_prebuiltEmptyResultObject",
+        ],
+        properties: {
+          command: {
+            type: "string",
+            example: "INSERT",
+          },
+          rowCount: {
+            type: "integer",
+            example: 1,
+          },
+          oid: {
+            type: "integer",
+            example: 0,
+          },
+          rows: {
+            type: "array",
+            items: {},
+            example: [],
+          },
+          fields: {
+            type: "array",
+            items: {},
+            example: [],
+          },
+          _types: {
+            type: "object",
+            additionalProperties: true,
+            example: {},
+          },
+          RowCtor: {
+            nullable: true,
+            example: null,
+          },
+          rowAsArray: {
+            type: "boolean",
+            example: false,
+          },
+          _prebuiltEmptyResultObject: {
+            nullable: true,
+            example: null,
           },
         },
       },
