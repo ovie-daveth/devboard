@@ -26,3 +26,17 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+
+export async function GET() {
+  try {
+    const services = await db.select().from(servicesType).orderBy(servicesType.name);
+    return NextResponse.json({ success: true, data: services });
+  } catch (err) {
+    console.error("SERVICE_FETCH_ERROR:", err);
+    return NextResponse.json(
+      { error: "Failed to fetch services" },
+      { status: 500 }
+    );
+  }
+}

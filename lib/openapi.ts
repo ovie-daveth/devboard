@@ -295,6 +295,64 @@ export const openApiDocument = {
             $ref: "#/components/responses/InternalServerError",
           },
         },
+      },
+      get: {
+        tags: ["Services"],
+        summary: "List registered services",
+        description: "Returns a list of all registered services.",
+        responses: {
+          "200": {
+            description: "Services fetched successfully.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["success", "data"],
+                  properties: {
+                    success: {
+                      type: "boolean",
+                      example: true,
+                    },
+                    data: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        required: ["id", "name"],
+                        properties: {
+                          id: {
+                            type: "string",
+                            format: "uuid",
+                            example: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                          },
+                          name: {
+                            type: "string",
+                            example: "worker",
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                example: {
+                  success: true,
+                  data: [
+                    {
+                      id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                      name: "worker",
+                    },
+                    {
+                      id: "4b825dc6-8ee0-4c9f-9a1e-2c963f66afa6",
+                      name: "api-gateway",
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          "500": {
+            $ref: "#/components/responses/InternalServerError",
+          },
+        },
       }
     },
   },
