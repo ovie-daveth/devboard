@@ -29,7 +29,7 @@ POST /api/logs
 GET /api/logs
 Filtering by service and level
 Time-range filtering
-Limit/offset pagination
+Cursor pagination
 Swagger documentation
 ```
 

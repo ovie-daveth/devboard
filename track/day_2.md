@@ -91,7 +91,7 @@ Limit 50
 After:
 
 ```text
-GET /api/logs?service=api&level=error&from=...&to=...&limit=20&offset=0
+GET /api/logs?service=api&level=error&from=...&to=...&limit=20&cursor=2026-01-01T10:00:00.000Z
 ```
 
 Added support for:
@@ -101,31 +101,31 @@ Added support for:
 - `from`
 - `to`
 - `limit`
-- `offset`
+- `cursor`
 
 This means logs can now be queried by time window and paginated.
 
 Example:
 
 ```text
-GET /api/logs?service=payment-api&level=error&limit=10&offset=0
+GET /api/logs?service=payment-api&level=error&limit=10
 ```
 
 ### Pagination
 
-Added limit/offset pagination.
+Added cursor-based pagination.
 
 ```text
-limit = how many rows to return
-offset = how many rows to skip
+limit = number of rows to return
+cursor = pagination bookmark returned by the previous page
 ```
 
 Examples:
 
 ```text
-Page 1: limit=10&offset=0
-Page 2: limit=10&offset=10
-Page 3: limit=10&offset=20
+Page 1: limit=10
+Page 2: limit=10&cursor=2026-01-01T10:00:00.000Z
+Page 3: limit=10&cursor=2026-01-01T09:45:00.000Z
 ```
 
 This prepares the API for a logs table UI.
@@ -342,7 +342,7 @@ Filtering by service and level is useful, but time filtering is what makes logs 
 
 A logs table cannot fetch every row forever.
 
-`limit` and `offset` are a simple first version that will work for the early dashboard.
+`limit` and `cursor` are a simple first version that will work for the early dashboard.
 
 ### 4. Services Need Their Own Model
 

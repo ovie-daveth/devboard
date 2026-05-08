@@ -92,15 +92,15 @@ export const openApiDocument = {
             description: "Maximum number of logs to return.",
           },
           {
-            name: "offset",
+            name: "cursor",
             in: "query",
             required: false,
             schema: {
-              type: "integer",
-              minimum: 0,
-              default: 0,
+              type: "string",
+              format: "date-time",
+              example: "2026-01-01T10:00:00.000Z",
             },
-            description: "Number of logs to skip before returning results.",
+            description: "Cursor for pagination. Use the value from the previous response's pagination.nextCursor.",
           },
           {
             name: "traceId",
@@ -138,7 +138,7 @@ export const openApiDocument = {
                         $ref: "#/components/schemas/Log",
                       },
                     },
-                    meta: {
+                    pagination: {
                       $ref: "#/components/schemas/PaginationMeta",
                     },
                   },
@@ -195,15 +195,52 @@ export const openApiDocument = {
                 $ref: "#/components/schemas/CreateLogRequest",
               },
               examples: {
-                basic: {
-                  summary: "Basic log",
+                minimum: {
+                  summary: "Minimum required fields",
+                  description: "Basic log with only required fields",
                   value: {
                     level: "info",
                     service: "api-gateway",
-                    message: "Request completed",
+                    message: "Request processed successfully",
+                  },
+                },
+                withTracing: {
+                  summary: "With distributed tracing",
+                  description: "Log with tracing information for distributed systems",
+                  value: {
+                    level: "error",
+                    service: "payment-service",
+                    message: "Payment processing failed",
+                    traceId: "abc123def456",
+                    spanId: "span789",
+                    requestId: "req_12345",
                     metadata: {
-                      durationMs: 42,
-                      requestId: "req_123",
+                      userId: "user_789",
+                      amount: 99.99,
+                      currency: "USD",
+                      errorCode: "PAYMENT_DECLINED",
+                    },
+                  },
+                },
+                complete: {
+                  summary: "Complete payload",
+                  description: "Log with all possible fields including custom timestamp and environment",
+                  value: {
+                    level: "warn",
+                    service: "worker",
+                    message: "High memory usage detected",
+                    timestamp: "2026-04-27T10:30:00.000Z",
+                    environment: "production",
+                    traceId: "trace_abcdef123456",
+                    spanId: "span_xyz789",
+                    requestId: "req_worker_001",
+                    metadata: {
+                      memoryUsage: 85.7,
+                      cpuUsage: 67.3,
+                      activeConnections: 42,
+                      queueSize: 15,
+                      jobType: "batch_processing",
+                      duration: 45000,
                     },
                   },
                 },
@@ -488,19 +525,20 @@ export const openApiDocument = {
       },
       PaginationMeta: {
         type: "object",
-        required: ["limit", "offset", "count"],
+        required: ["limit", "hasMore"],
         properties: {
           limit: {
             type: "integer",
             example: 50,
           },
-          offset: {
-            type: "integer",
-            example: 0,
+          hasMore: {
+            type: "boolean",
+            example: true,
           },
-          count: {
-            type: "integer",
-            example: 12,
+          nextCursor: {
+            type: "string",
+            nullable: true,
+            example: "2026-01-01T10:00:00.000Z",
           },
         },
       },

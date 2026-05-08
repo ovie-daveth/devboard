@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-
-// Drizzle database instance
 import { db } from "@/db";
-
-// Drizzle schema
 import { logs } from "@/db/schema";
-
-// Drizzle SQL helpers
 import {
   and,
   desc,
@@ -14,20 +8,10 @@ import {
   gte,
   lte,
   lt,
-  or,
-  sql,
   type SQL,
 } from "drizzle-orm";
-
-// Zod validation schema
 import { createLogSchema } from "@/lib/validations/log";
 
-
-
-// ---------------------------------------------
-// Allowed log levels
-// Prevents invalid values polluting the database
-// ---------------------------------------------
 const VALID_LOG_LEVELS = new Set([
   "debug",
   "info",
@@ -35,32 +19,14 @@ const VALID_LOG_LEVELS = new Set([
   "error",
 ]);
 
-
-
-// ---------------------------------------------
-// Allowed deployment environments
-// ---------------------------------------------
 const VALID_ENVIRONMENTS = new Set([
   "development",
   "staging",
   "production",
 ]);
 
-
-
-// ---------------------------------------------
-// Default pagination size
-// ---------------------------------------------
 const DEFAULT_LIMIT = 50;
-
-
-
-// ---------------------------------------------
-// Absolute max limit
-// Prevents abuse like ?limit=1000000
-// ---------------------------------------------
 const MAX_LIMIT = 100;
-
 
 
 // ---------------------------------------------
@@ -79,14 +45,6 @@ function parseLimit(value: string | null, fallback: number) {
 }
 
 
-
-// ---------------------------------------------
-// Safely parse dates from query params
-// Returns:
-// - null if missing
-// - undefined if invalid
-// - Date if valid
-// ---------------------------------------------
 function parseDate(value: string | null): Date | null | undefined {
   if (!value) return null;
 
@@ -99,8 +57,6 @@ function parseDate(value: string | null): Date | null | undefined {
   return parsed;
 }
 
-
-
 // =============================================
 // POST /api/logs
 // Log ingestion endpoint
@@ -108,23 +64,10 @@ function parseDate(value: string | null): Date | null | undefined {
 export async function POST(req: NextRequest) {
   try {
 
-    // -----------------------------------------
-    // Parse request body
-    // -----------------------------------------
     const body = await req.json();
 
-
-
-    // -----------------------------------------
     // Validate payload with Zod
-    // -----------------------------------------
     const parsed = createLogSchema.safeParse(body);
-
-
-
-    // -----------------------------------------
-    // Reject invalid payloads
-    // -----------------------------------------
     if (!parsed.success) {
       return NextResponse.json(
         {
@@ -137,14 +80,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-
-
-    // -----------------------------------------
     // Extract validated data
-    // -----------------------------------------
     const log = parsed.data;
-
-
 
     // -----------------------------------------
     // Insert log into database
@@ -157,26 +94,15 @@ export async function POST(req: NextRequest) {
       level: log.level,
       service: log.service,
       message: log.message,
-
-      // Event timestamp
-      // If client didn't provide one,
-      // fallback to current time
       timestamp: log.timestamp ?? new Date(),
-
       environment: log.environment,
-
       traceId: log.traceId,
       spanId: log.spanId,
       requestId: log.requestId,
-
       metadata: log.metadata,
     });
 
-
-
-    // -----------------------------------------
     // Success response
-    // -----------------------------------------
     return NextResponse.json(
       {
         success: true,
@@ -186,17 +112,7 @@ export async function POST(req: NextRequest) {
 
   } catch (err) {
 
-    // -----------------------------------------
-    // Internal logging
-    // -----------------------------------------
     console.error("LOG_INGEST_ERROR:", err);
-
-
-
-    // -----------------------------------------
-    // Generic server error
-    // Never leak internal details to client
-    // -----------------------------------------
     return NextResponse.json(
       {
         error: "Failed to ingest log",
@@ -211,21 +127,13 @@ export async function POST(req: NextRequest) {
 // =============================================
 // GET /api/logs
 // Query + filter logs
-// Uses CURSOR pagination
 // =============================================
 export async function GET(req: NextRequest) {
   try {
 
-    // -----------------------------------------
-    // Parse URL search params
-    // -----------------------------------------
     const { searchParams } = new URL(req.url);
 
-
-
-    // -----------------------------------------
     // Filtering params
-    // -----------------------------------------
     const service = searchParams.get("service");
     const level = searchParams.get("level");
     const environment = searchParams.get("environment");
@@ -242,28 +150,22 @@ export async function GET(req: NextRequest) {
     // Cursor pagination
     //
     // Cursor format:
-    // timestamp|id
+    // ISO timestamp string
     //
     // Example:
-    // 2026-01-01T10:00:00Z|uuid
+    // 2026-01-01T10:00:00.000Z
     // -----------------------------------------
     const cursor = searchParams.get("cursor");
 
 
-
-    // -----------------------------------------
     // Parse limit safely
-    // -----------------------------------------
     const requestedLimit = parseLimit(
       searchParams.get("limit"),
       DEFAULT_LIMIT
     );
 
 
-
-    // -----------------------------------------
     // Reject invalid limit
-    // -----------------------------------------
     if (requestedLimit === null) {
       return NextResponse.json(
         {
@@ -273,18 +175,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-
-
-    // -----------------------------------------
     // Cap limit
-    // -----------------------------------------
     const limit = Math.min(requestedLimit, MAX_LIMIT);
 
-
-
-    // -----------------------------------------
     // Validate level
-    // -----------------------------------------
     if (level && !VALID_LOG_LEVELS.has(level)) {
       return NextResponse.json(
         {
@@ -294,11 +188,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-
-
-    // -----------------------------------------
     // Validate environment
-    // -----------------------------------------
     if (
       environment &&
       !VALID_ENVIRONMENTS.has(environment)
@@ -311,19 +201,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-
-
-    // -----------------------------------------
     // Parse dates
-    // -----------------------------------------
     const fromDate = parseDate(from);
     const toDate = parseDate(to);
 
-
-
-    // -----------------------------------------
-    // Reject invalid dates
-    // -----------------------------------------
     if (fromDate === undefined || toDate === undefined) {
       return NextResponse.json(
         {
@@ -333,18 +214,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-
-
-    // -----------------------------------------
     // Dynamic SQL filters
-    // -----------------------------------------
     const filters: SQL[] = [];
 
-
-
-    // -----------------------------------------
     // Exact-match filters
-    // -----------------------------------------
     if (service) {
       filters.push(eq(logs.service, service));
     }
@@ -365,11 +238,6 @@ export async function GET(req: NextRequest) {
       filters.push(eq(logs.requestId, requestId));
     }
 
-
-
-    // -----------------------------------------
-    // Time-range filters
-    // -----------------------------------------
     if (fromDate) {
       filters.push(gte(logs.timestamp, fromDate));
     }
@@ -379,25 +247,15 @@ export async function GET(req: NextRequest) {
     }
 
 
-
-    // -----------------------------------------
+    // ---------------------------------------------
     // Cursor pagination logic
     //
-    // Uses:
-    // timestamp + id
-    //
-    // This guarantees stable ordering
-    // even if timestamps are identical
-    // -----------------------------------------
+    // Uses timestamp for pagination
+    // ---------------------------------------------
     if (cursor) {
+      const cursorDate = parseDate(cursor);
 
-      const [cursorTimestamp, cursorId] =
-        cursor.split("|");
-
-
-
-      // Validate cursor format
-      if (!cursorTimestamp || !cursorId) {
+      if (!cursorDate) {
         return NextResponse.json(
           {
             error: "Invalid cursor format",
@@ -406,20 +264,8 @@ export async function GET(req: NextRequest) {
         );
       }
 
-
-
-      // Add composite cursor condition
-      filters.push(
-        sql`
-          (
-            ${logs.timestamp},
-            ${logs.id}
-          ) < (
-            ${new Date(cursorTimestamp)},
-            ${cursorId}
-          )
-        `
-      );
+      // Add cursor condition
+      filters.push(lt(logs.timestamp, cursorDate));
     }
 
 
@@ -492,18 +338,12 @@ export async function GET(req: NextRequest) {
     // -----------------------------------------
     let nextCursor: string | null = null;
 
-
-
     if (hasMore) {
-
       // Last visible row
       const last = data[data.length - 1];
 
-
-
-      // Composite cursor
-      nextCursor =
-        `${last.timestamp.toISOString()}|${last.id}`;
+      // Timestamp-only cursor
+      nextCursor = last.timestamp.toISOString();
     }
 
 
