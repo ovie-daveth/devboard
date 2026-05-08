@@ -161,6 +161,7 @@ export default function LogsViewer() {
     toDate && { key: 'to', label: `To: ${toDate}` },
   ].filter(Boolean) as { key: string; label: string }[];
 
+
   return (
     <div className="min-h-screen bg-slate-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-full">
