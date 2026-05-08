@@ -7,7 +7,7 @@ export const createLogSchema = z.object({
 
   timestamp: z.coerce.date().optional(),
 
-  environment: z.enum(["local", "development", "staging", "production"]).default("development"),
+  environment: z.enum(["production", "staging", "development"]).default("development"),
 
   traceId: z.string().optional(),
   spanId: z.string().optional(),

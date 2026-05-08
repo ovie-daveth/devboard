@@ -23,7 +23,7 @@ export const openApiDocument = {
         tags: ["Logs"],
         summary: "List logs",
         description:
-          "Returns up to 50 logs. Results can be filtered by service and level.",
+          "Returns up to 50 logs. Results can be filtered by service, level, and environment.",
         parameters: [
           {
             name: "service",
@@ -45,6 +45,17 @@ export const openApiDocument = {
               example: "error",
             },
             description: "Only return logs with this level.",
+          },
+          {
+            name: "environment",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+              enum: ["production", "staging", "development"],
+              example: "production",
+            },
+            description: "Only return logs from this environment.",
           },
           {
             name: "from",
@@ -91,6 +102,26 @@ export const openApiDocument = {
             },
             description: "Number of logs to skip before returning results.",
           },
+          {
+            name: "traceId",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+              example: "",
+            },
+            description: "Only return logs with this trace ID.",
+          },
+          {
+            name: "requestId",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+              example: "",
+            },
+            description: "Only return logs with this request ID.",
+          },
         ],
         responses: {
           "200": {
@@ -126,6 +157,11 @@ export const openApiDocument = {
                   invalidLevel: {
                     value: {
                       error: "Invalid level",
+                    },
+                  },
+                  invalidEnvironment: {
+                    value: {
+                      error: "Invalid environment",
                     },
                   },
                   invalidPagination: {
@@ -364,6 +400,7 @@ export const openApiDocument = {
         properties: {
           level: {
             type: "string",
+            enum: ["debug", "info", "warn", "error"],
             description: "Severity level for the log entry.",
             example: "error",
           },
@@ -376,6 +413,34 @@ export const openApiDocument = {
             type: "string",
             description: "Human-readable log message.",
             example: "Job failed",
+          },
+          timestamp: {
+            type: "string",
+            format: "date-time",
+            description: "Timestamp when the log was emitted. Defaults to current time if not provided.",
+            example: "2026-04-27T10:30:00.000Z",
+          },
+          environment: {
+            type: "string",
+            enum: ["production", "staging", "development"],
+            description: "Environment where the log was emitted.",
+            example: "production",
+            default: "development",
+          },
+          traceId: {
+            type: "string",
+            description: "Distributed tracing trace ID.",
+            example: "abc123",
+          },
+          spanId: {
+            type: "string",
+            description: "Distributed tracing span ID.",
+            example: "def456",
+          },
+          requestId: {
+            type: "string",
+            description: "Request ID for correlating logs.",
+            example: "req_789",
           },
           metadata: {
             type: "object",
