@@ -1,4 +1,5 @@
 import { pgTable, uuid, text, timestamp, jsonb, index } from "drizzle-orm/pg-core";
+import { email } from "zod";
 
 
 export const logs = pgTable(
@@ -54,5 +55,17 @@ export const servicesType = pgTable("services_type", {
 }, (table) => {
   return {
     nameIdx: index("name_idx").on(table.name),
+  };
+});
+
+export const AuthorsType = pgTable("authors_type", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull().unique(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").unique().notNull(),
+}, (table) => {
+  return {
+    nameIdx: index("name_idx").on(table.name),
+    emailIdx: index("email_idx").on(table.email),
   };
 });
